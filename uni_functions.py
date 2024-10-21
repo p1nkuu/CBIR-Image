@@ -24,15 +24,17 @@ model = timm.create_model("hf-hub:MahmoodLab/uni", pretrained=True, init_values=
 transform = create_transform(**resolve_data_config(model.pretrained_cfg, model=model))
 UNI_model = (model, transform)
 
-def generate_embeddings_w_UID(caption_file, model=UNI_model[0], subset=False):
+def generate_embeddings_w_UID(img_directory, caption_file, file_types, np_filename, model=UNI_model[0], subset=False):
     """
     Generates and saves image embeddings using pretrained UNI model and 
     assigns UID from caption (.json)file to embeddings
 
     input: 
-        filenames: list of String filenames 
-        caption_file: .json file of captions, primarily for uid retrieval
-
+        img_directory: str representing directory holding your images ex. '/Users/genesishang/bttai_novartis/books_set/images/'
+        caption_file: str representing directory holding captions (json file) ex. ''/Users/genesishang/bttai_novartis/books_set/captions.json'
+        file_type: str representing types of files in img_directory ex. '.png'
+        np_filename: str representing what you want your np file of embeddings to be named
+        
     output: 
         None
     """
@@ -43,33 +45,34 @@ def generate_embeddings_w_UID(caption_file, model=UNI_model[0], subset=False):
 
     feature_embeddings = []
     uid_to_embeddings_map = {}
-    i = 0
 
-    if subset == True:
-        sample_size = input('How large of a subset would you like?')
-        while i <= int(sample_size):
-            for key, item in data.items():
-                img_str = item['uuid']#Image filename as String
-                uid = key
-
-                image = convert_to_RGB(img_str+'.png')
-
-                with torch.inference_mode():
-                    feature_emb = model(image) # Extracted features (torch.Tensor) with shape [1,1024]
-
-                uid_to_embeddings_map[uid] = feature_emb
-                i+=1
-    else:
-        for key, item in data.items():
-                img_str = item['uuid']#Image filename as String
-                uid = key
-
-                image = convert_to_RGB(img_str+'.png')
+    if subset:
+        sample_size = int(input('How large of a subset would you like?'))
+        if sample_size < 1:
+            print("Sample size must be at least 1.")
+            return
+        
+    for key, item in data.items():
+        img_str = item['uuid']  # Image filename as String
+        uid = key
+        
+        for file_type in file_types:
+            img_path = os.path.join(img_directory, img_str + file_type)
+            if os.path.exists(img_path):  # Check if the file exists
+                image = convert_to_RGB(img_path)
 
                 with torch.inference_mode():
-                    feature_emb = model(image) # Extracted features (torch.Tensor) with shape [1,1024]
+                    feature_emb = model(image)  # Extracted features
 
                 uid_to_embeddings_map[uid] = feature_emb
+                feature_embeddings.append(feature_emb)
+
+                # Exit after obtaining the desired sample size
+                if subset and len(feature_embeddings) >= sample_size:
+                    break  # Break out of the file type loop
+
+        if subset and len(feature_embeddings) >= sample_size:
+            break  # Break out of the data loop
 
     uid_to_embeddings_map = np.array(feature_embeddings)
     save_embeddings(uid_to_embeddings_map)
@@ -100,7 +103,7 @@ def generate_embeddings(filenames, model=UNI_model[0]):
 
     save_embeddings(feature_embeddings)
 
-def save_embeddings(embeddings_list):
+def save_embeddings(embeddings_list, np_filename):
     """
     Saves embeddings as .npy file
 
@@ -111,8 +114,7 @@ def save_embeddings(embeddings_list):
         None
 
     """
-    save_name = input( "Please name your embeddings .npy file (No '.npy' necessary. Example input: books_set_embeddings)")
-    np.save(save_name, embeddings_list)
+    np.save(np_filename, embeddings_list)
 
 
 def convert_to_RGB(file_str,transform=UNI_model[1]):
@@ -157,8 +159,9 @@ def img_folder_to_str(folder_path, filetypes):
     """
     filename_strings =[]
     folder_path_object = []
+
     for types in filetypes:
-        folder_path_object.append( Path(folder_path).glob("*"+types) )
+        folder_path_object.append(Path(folder_path).glob("*"+types) )
     
     for path_obj in folder_path_object:
         filename_strings = filename_strings + [str(p) for p in path_obj]
@@ -228,4 +231,12 @@ def convert_3D_to_2D(embeddings):
     new_data = data.reshape(data.shape[0]*data.shape[1], data.shape[2])
     return new_data
 
-generate_embeddings_w_UID('/Users/genesishang/bttai_novartis/books_set/captions.json', subset=50)
+
+def query_image_embedding(query_img_path):
+    with torch.no_grad():
+        image = Image.open(query_img_path) #Create function
+        image_rgb = image.convert('RGB')
+        image = transform(image_rgb).unsqueeze(dim=0) # Image (torch.Tensor) with shape [1, 3, 224, 224] following image resizing and normalization (ImageNet parameters)
+
+        xq = model(image)
+    return xq
