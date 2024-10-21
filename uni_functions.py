@@ -215,7 +215,9 @@ def KNN_filenames(I,filenames):
     output:
         list of corresponding filenames retrieved by KNN
     """
-    results = [filenames[I[0]], filenames[I[1]], filenames[I[2]], filenames[I[3]]]
+    results = []
+    for index in I:
+        results.append(filenames[index])
     return results
 
 def convert_3D_to_2D(embeddings):
