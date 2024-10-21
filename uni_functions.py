@@ -196,7 +196,7 @@ def perform_knn(k, index, query_img):
         
     output:
         tuple: (D = distance metric, I = indices of k nearest neighbors in Index object"""
-    k = 4                         # we want to see 4 nearest neighbors
+    k = k                         # we want to see 4 nearest neighbors
     D, I = index.search(query_img, k) # sanity check
 
     D = D[0].tolist()
