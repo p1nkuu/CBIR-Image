@@ -16,7 +16,7 @@ import json
 from random import sample
 
 
-login()  # login with your User Access Token, found at https://huggingface.co/settings/tokens
+login(token = "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")  # login with your User Access Token, found at https://huggingface.co/settings/tokens
 
 # pretrained=True needed to load UNI weights (and download weights for the first time)
 # init_values need to be passed in to successfully load LayerScale parameters (e.g. - block.0.ls1.gamma)
@@ -75,9 +75,9 @@ def generate_embeddings_w_UID(img_directory, caption_file, file_types, np_filena
             break  # Break out of the data loop
 
     uid_to_embeddings_map = np.array(feature_embeddings)
-    save_embeddings(uid_to_embeddings_map)
+    save_embeddings(uid_to_embeddings_map, np_filename)
 
-def generate_embeddings(filenames, model=UNI_model[0]):
+def generate_embeddings(filenames, model=UNI_model[0], np_filename):
     """
     Generates and saves image embeddings using pretrained UNI model
 
@@ -101,7 +101,7 @@ def generate_embeddings(filenames, model=UNI_model[0]):
 
     feature_embeddings = np.array(feature_embeddings)
 
-    save_embeddings(feature_embeddings)
+    save_embeddings(feature_embeddings, np_filename)
 
 def save_embeddings(embeddings_list, np_filename):
     """
