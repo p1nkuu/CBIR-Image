@@ -77,7 +77,7 @@ def generate_embeddings_w_UID(img_directory, caption_file, file_types, np_filena
     uid_to_embeddings_map = np.array(feature_embeddings)
     save_embeddings(uid_to_embeddings_map, np_filename)
 
-def generate_embeddings(filenames, model=UNI_model[0], np_filename):
+def generate_embeddings(filenames, np_filename, model=UNI_model[0]):
     """
     Generates and saves image embeddings using pretrained UNI model
 
