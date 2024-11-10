@@ -1,7 +1,5 @@
 .venv
 books_set/CBIR-Image/
-uni_model/augmented0.jpg
-uni_model/augmented1.jpg
-uni_model/augmented2.jpg
-uni_model/augmented3.jpg
-uni-model/augmented4.jpg
+
+*.png
+*.jpg
