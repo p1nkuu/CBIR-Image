@@ -216,7 +216,10 @@ def KNN_filenames(I,filenames):
         list of corresponding filenames retrieved by KNN
     """
     results = []
+    print(len(I))
+    print(len(filenames))
     for index in I:
+        print(index)
         results.append(filenames[index])
     return results
 
